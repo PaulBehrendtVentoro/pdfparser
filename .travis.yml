@@ -1,23 +1,28 @@
+os: linux
+dist: xenial
 language: php
 
 php:
-#  - 5.3
-#  - 5.4
-#  - 5.5
   - 5.6
   - 7.0
   - 7.1
   - 7.2
   - 7.3
-  - hhvm
-  
-matrix:
-  allow_failures:
-    - php: hhvm
-  
-before_script:
-  - composer self-update || true
-  - composer update
-  - composer --prefer-source --dev install
+  - nightly
 
-script: ./vendor/bin/atoum -d src/Smalot/PdfParser/Tests/ -ncc
+jobs:
+  fast_finish: true
+  allow_failures:
+    - php: nightly
+  include:
+    - php: 7.4
+      env: COMPOSER_FLAGS="--prefer-lowest" LINTER_RUN=run COVERAGE_FLAGS="--coverage-clover coverage/clover.xml"
+
+install:
+  - composer update --prefer-dist --no-progress --no-suggest --optimize-autoloader $COMPOSER_FLAGS
+
+script:
+  - if [ "$LINTER_RUN" = "run" ]; then php vendor/bin/php-cs-fixer fix --verbose --dry-run ; fi;
+  - if [ "$LINTER_RUN" = "run" ]; then composer require phpstan/phpstan --no-progress --no-suggest ; fi;
+  - if [ "$LINTER_RUN" = "run" ]; then php vendor/bin/phpstan analyse src test tests --no-progress --level 3 ; fi;
+  - php vendor/bin/phpunit $COVERAGE_FLAGS
