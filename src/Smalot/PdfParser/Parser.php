@@ -268,6 +268,7 @@ class Parser
         switch ($type) {
             case '<<':
                 $header = $this->parseHeader($value, $document);
+
                 return PDFObject::factory($document, $header, null);
 
             case 'numeric':
